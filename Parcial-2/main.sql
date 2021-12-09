@@ -62,134 +62,159 @@ WHEN DUP_VAL_ON_INDEX THEN
 END;
 /
 
-INSERT INTO AULAS VALUES ('1', '1', '1', '1', 'S')
+create table habitaciones (
+ piso integer NOT NULL,
+ habitacion varchar(2) NOT NULL,
+ tipo varchar(10) DEFAULT 'Doble'
+CONSTRAINT nn_tipo NOT NULL
+CONSTRAINT ch_Tipo  CHECK (tipo IN ('Individual','Doble', 'Suite')),
+ primary key(piso,habitacion));
 
+create table reservas (
+ piso integer,
+ habitacion varchar(2),
+ fechaentrada date DEFAULT SYSDATE,
+ noches integer,
+ 
+ primary key(piso,habitacion,fechaentrada),
+ foreign key (piso,habitacion) references habitaciones
+);
 
+create table temporadas (
+ nombre varchar(10) not null,
+ mesInicio integer not null,
+ diaInicio integer not null,
+ mesFin integer not null,
+ diaFin integer not null,
+ primary key(nombre,mesInicio,diaInicio)
+);
 
-/*
-CASO N2
-
-CASO NO. 2  Implementación de Programación Almacenada  de Base de Datos.     Valor  35 Ptos
-
-Para el siguiente caso levantar los objetos de datos para el Hotel ‘EL DURMIENTE, S.A’, estos son las relaciones o tablas  reservas,  habitaciones, temporadas,  y estadística_hotel realizar lo siguiente :
-
- a.      Crear el objetos de dato habitaciones  con los 
- siguientes campos(id_cadena nombre,  piso entero no nulo, habitación varchar(2) no nulo,  tipo varchar(10) Default ‘Doble’   CONSTRAINT  de tipo no nulo CONSTRAINT   CHECK (‘Individual’,  ‘Doble’, ‘Suite’) ,  llave primaria  piso y habitación). Y id_cadena es un FK referenciada a  estadística_hotel
-
- Crear el objeto de dato reservas con los siguientes campos  (piso entero, habitación varchar(2), fechaentrada fecha default sysdate,  noches entero,  llave primaria (piso, habitación, fechaentrada), llave foránea (piso y habitación ) referenciada a habitaciones).
-
- Crear el objeto de dato temporadas con los siguientes campos ( nombre varchar(10) no nulo, mesinicio entero no nulo, diainicio entero no nulo,  mesfinalizacion entero no nulo, dia_finalizacion entero no nulo, llave primaria (nombre, mesincio,diainicio)).
-
- Crear el objeto de datos estadística_hotel  (id_cadena number, nombre varchar2(50), habitacionesocupadas number, habitacionesdisponibles number, habitacionesreservadas number) donde id_cadena es el primary key.  10 ptos
-
- b.      Escribir un procedimiento para Insertar en la tabla temporadas la información para 3 filas ( ‘Alta, 6,1,8,30) (‘Media’, 1,1,31,5) (‘Baja’, 1,9,31,12)   5 ptos.
-
- c.       Escribir procedimiento almacenado que permita rellenar  la tabla habitaciones con los datos del hotel previamente.  El Hotel dispone de 12 pisos de habitaciones, numeradas del 1 a la 12. En cada planta de la 1  a la 11 hay 25 habitaciones: 20 dobles (numeradas de 1 a 20) y 5 sencillas (de la 21 a la 25). En  la planta 12 solo tiene 8 suites numeradas de la 1  a la 8.    10 Ptos
-
- d.      Escribir un procedimiento almacenado que permita actualizar las habitaciones que han sido ocupada por los huéspedes los cuales son: las 8 suites y las 20 dobles. Una vez actualizadas las habitaciones debe por medio de funciones determinar cuántas habitaciones están ocupadas, cuantas están disponible y de darse el caso determinar las que están reservadas,  para que sean actualizadas en la tabla estadística_hotel antes de concluir el procedimiento. 10 Ptos
-
-Nota los procedimientos deberán tener las invocaciones correspondientes.
-
-*/
-
-
-
-
-CREATE TABLE ESTADISTICA_HOTEL (
+CREATE TABLE estadistica_hotel (
   id_cadena number not null,
-  nombre_hotel varchar2(50) not null, 
+  nombre_hotel varchar2(50) not null,
   habitacionesocupadas number default 0, --Se podría meter default de 0
-  habitacionesdisponibles number, 
+  habitacionesdisponibles number,
   habitacionesreservadas number default 0, --Se podría meter default de 0
   CONSTRAINT pk_cadena PRIMARY KEY (id_cadena)
 );
 
-CREATE TABLE TEMPORADAS (
-  nombre_temporada varchar2(10) not null,
-  mesinicio number not null, 
-  diainicio number not null, 
-  mesfinalizacion number not null, 
-  dia_finalizacion number not null, 
-  CONSTRAINT pk_nomb_temp PRIMARY KEY (nombre_temporada, mesinicio, diainicio)
-);
+CREATE OR REPLACE PROCEDURE insertar_temp(
+    p_nombre IN temporadas.nombre%TYPE,
+    p_mesInicio IN temporadas.mesinicio%TYPE ,
+    p_diaInicio IN temporadas.DIAINICIO%TYPE ,
+    p_mesFin  IN temporadas.MESFIN%TYPE,
+    p_diaFin  IN temporadas.DIAFIN%TYPE
+)
+IS
 
-CREATE TABLE HABITACIONES (
-  id_cadena number,
-  piso number not null, 
-  habitacion varchar2(2) not null, --Revisar esta declaración
-  tipo varchar2(10) default 'Doble' not null, 
-  CONSTRAINT const_tipo CHECK (tipo in ('Individual','Doble', 'Suite')),
-  CONSTRAINT pk_habitaciones PRIMARY KEY (piso, habitacion),
-  CONSTRAINT fk_cadena FOREIGN KEY ( id_cadena )
-        REFERENCES ESTADISTICA_HOTEL ( id_cadena)
-);
-
-CREATE TABLE RESERVAS (
-  piso number,
-  habitacion varchar2(2), 
-  fechaentrada date default sysdate,
-  noches number,
-  CONSTRAINT const_tipo CHECK (tipo in ('Individual','Doble', 'Suite')),
-  CONSTRAINT pk_reservas PRIMARY KEY (piso, habitacion, fechaentrada),
-  CONSTRAINT fk_piso FOREIGN KEY ( piso )
-    REFERENCES HABITACIONES ( piso),
-  CONSTRAINT fk_habitacion FOREIGN KEY ( habitacion )
-    REFERENCES HABITACIONES ( habitacion)
-        
-);
-
--- Procedimientos 
-
--- Punto b 
-
-CREATE OR REPLACE PROCEDURE Insertar_temporadas(
-	p_nombre_temporada OUT TEMPORADAS.nombre_temporada%TYPE,
-	p_mesinicio OUT TEMPORADAS.mesinicio%TYPE,
-    p_diainicio OUT TEMPORADAS.diainicio%TYPE,
-    p_mesfinalizacion OUT TEMPORADAS.mesfinalizacion%TYPE,
-    p_dia_finalizacion OUT TEMPORADAS.dia_finalizacion%TYPE,
-	)
 BEGIN
-    INSERT INTO TEMPORADAS (nombre_temporada,mesinicio,diainicio,mesfinalizacion,dia_finalizacion)
-    VALUES(p_nombre_temporada,p_mesinicio,p_diainicio,p_mesfinalizacion,p_dia_finalizacion);
-END Insertar_temporadas;
+
+INSERT INTO temporadas(nombre, mesinicio, diainicio,mesfin,diafin)
+VALUES (p_nombre, p_mesInicio, p_diaInicio, p_mesFin, p_diaFin);
+
+EXCEPTION 
+    WHEN DUP_VAL_ON_INDEX THEN
+        dbms_output.put_line('La descripcion ya existe');
+    WHEN OTHERS THEN
+	    dbms_output.put_line('Ocurrió un error en la inserción de los datos');
+
+END;
+/
+--PROCEDIMIENTO 2
+CREATE OR REPLACE PROCEDURE creaHabitaciones AS
+  piso integer;
+  habitacion integer;
+BEGIN
+  -- primero borramos las habitaciones que haya anteriormente
+  delete from habitaciones;
+  -- las primeras 11 plantas
+ FOR piso in 1..11 LOOP
+     FOR habitacion in 1..20 LOOP
+        insert into habitaciones values(piso,habitacion,'Doble');
+     END LOOP;
+     FOR habitacion in 21..25 LOOP
+        insert into habitaciones values(piso,habitacion,'Individual');
+     END LOOP;
+ END LOOP;
+ 
+  -- ahora la planta 12
+  piso:=12;
+  FOR habitacion in 1..8 LOOP
+        insert into habitaciones values(piso,habitacion,'Suite');
+  END LOOP;
+ 
+END creaHabitaciones; 
 /
 
-EXECUTE Insertar_temporadas('Alta', 6,1,8,30);
-EXECUTE Insertar_temporadas('Media', 1,1,31,5);
-EXECUTE Insertar_temporadas('Baja', 1,9,31,12);
+--parte c
+CREATE OR REPLACE FUNCTION CalcularDisponible(fecha1 date, fecha2 date, n1 integer, n2 integer) RETURN integer AS
+  reservacion integer;
+BEGIN
+if (fecha1>=fecha2 and fecha1<=fecha2+n2-1) or (fecha1+n1-1>=fecha2 and fecha1+n1-1<=fecha2+n2-1) or
+      (fecha1>=fecha2 and fecha1+n1-1<=fecha2+n2-1) then
+   reservacion := 1;
+else
+   reservacion :=0;
+end if;         
+ RETURN reservacion;
+END;
+/
 
+CREATE OR REPLACE PROCEDURE reservaHabitacion(
+  p_piso  IN reservas.piso%TYPE,
+   p_habitacion  IN reservas.habitacion%TYPE,
+    p_fechaentrada  IN reservas.fechaentrada%TYPE,
+     p_noches  IN reservas.noches%TYPE) 
+     AS
+ numero integer;
+BEGIN
+     SELECT count(*) INTO numero FROM reservas r
+     where r.piso=p_piso and r.habitacion=p_habitacion and
+    CalcularDisponible(r.fechaentrada,p_fechaentrada,r.noches,p_noches)=1;
+     if (numero=0) then
+        insert into reservas (piso, habitacion, fechaentrada, noches )values(p_piso,p_habitacion,p_fechaentrada,p_noches);
+       DBMS_OUTPUT.PUT_LINE('Reservado');
+     else
+        DBMS_OUTPUT.PUT_LINE('No se puede reservar');
+     end if;
+END reservaHabitacion;
+/
 
+show error;
 
-CREATE OR REPLACE PROCEDURE (
+--BLOQUE ANONIMO PARTE B
+DECLARE
+BEGIN
+INSERTAR_TEMP('ALTA',6,1,8,30);
+INSERTAR_TEMP('MEDIA',1,1,31,5);
+INSERTAR_TEMP('BAJA',1,9,31,12);
+END;
+/
 
+select * from temporadas;
 
-    
-)
+--BLOQUE ANONIMO PARTE C
+DECLARE
+BEGIN
+creaHabitaciones();
+END;
+/
 
-/*
-CREATE SEQUENCE Pisos
-INCREMENT BY 1
-START WITH 1          -----troleao con los pisos
-MAXVALUE 
-MINVALUE 1;
-*/
+SELECT * from habitaciones;
 
-CREATE SEQUENCE Habitaciones_dobles
-INCREMENT BY 1
-START WITH 20
-MAXVALUE 20
-MINVALUE 1;
+--BLOQUE ANONIMO PARTE C
+DECLARE
 
-CREATE SEQUENCE Habitaciones_sencillas
-INCREMENT BY 1
-START WITH 21
-MAXVALUE 25
-MINVALUE 21;
+BEGIN
+reservaHabitacion(1,1,'8-DEC-2021',10);
+reservaHabitacion(1,1,'19-DEC-2021',1);
+reservaHabitacion(1,1,'21-DEC-2021',10);
+reservaHabitacion(1,1,'11-DEC-2021',10);
+reservaHabitacion(1,1,'12-DEC-2021',10);
+reservaHabitacion(1,1,'13-DEC-2021',10);
+reservaHabitacion(1,1,'14-DEC-2021',10);
+reservaHabitacion(1,1,'15-DEC-2021',10);
+reservaHabitacion(1,1,'16-DEC-2021',10);
 
-CREATE SEQUENCE Habitaciones_Suits
-INCREMENT BY 1
-START WITH 1
-MAXVALUE 8
-MINVALUE 1;
-
+END;
+/
