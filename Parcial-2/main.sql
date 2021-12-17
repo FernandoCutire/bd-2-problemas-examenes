@@ -1,10 +1,11 @@
 /*
 Parcial 2 
-PISO1 - F.Sistemas 1-20
-PISO2 - F.Civil 21-40
-PISO3 - F.Industrial 41-60
-PISO4 - F.Mecánica 61-70
-PISO5 - F.Eléctrica 71-80
+Cutire, Fernando
+P1 - F.Sistemas 1-20
+P2 - F.Civil 21-40
+P3 - F.Industrial 41-60
+P4 - F.Mecánica 61-70
+P5 - F.Eléctrica 71-80
 
 */
 
@@ -19,7 +20,6 @@ CREATE TABLE AULAS (
   CONSTRAINT PK_AULAS PRIMARY KEY ( aula_id, piso, salon, facultad )
 );
 
---Bloque Anonimo CASO 1 
 DECLARE
 v_aula_id Aulas.aula_id%TYPE;
 v_piso Aulas.piso%TYPE;
@@ -53,11 +53,11 @@ END LOOP;
 
 EXCEPTION
 WHEN DUP_VAL_ON_INDEX THEN
-        dbms_output.put_line('Datos repetidos');
+        dbms_output.put_line('⚠️ Error: Datos repetidos');
 	WHEN VALUE_ERROR THEN
-		dbms_output.put_line('Error causado por el tamaño de los datos ingresados');
+		dbms_output.put_line('⚠️ Error: causado por el tamaño de los datos ingresados');
     WHEN OTHERS THEN
-	    dbms_output.put_line('Ocurrió un error en la inserción de los datos');
+	    dbms_output.put_line('⚠️ Error: Ocurrió un error en la inserción de los datos');
 
 END;
 /
@@ -68,7 +68,8 @@ create table habitaciones (
  tipo varchar(10) DEFAULT 'Doble'
 CONSTRAINT nn_tipo NOT NULL
 CONSTRAINT ch_Tipo  CHECK (tipo IN ('Individual','Doble', 'Suite')),
- primary key(piso,habitacion));
+ primary key(piso,habitacion)
+ );
 
 create table reservas (
  piso integer,
@@ -89,34 +90,34 @@ create table temporadas (
  primary key(nombre,mesInicio,diaInicio)
 );
 
-CREATE TABLE estadistica_hotel (
+CREATE TABLE hotel_estadistica (
   id_cadena number not null,
   nombre_hotel varchar2(50) not null,
-  habitacionesocupadas number default 0, --Se podría meter default de 0
-  habitacionesdisponibles number,
-  habitacionesreservadas number default 0, --Se podría meter default de 0
+  habs_ocup number default 0, 
+  habs_dispo number,
+  habs_reser number default 0,
   CONSTRAINT pk_cadena PRIMARY KEY (id_cadena)
 );
 
-CREATE OR REPLACE PROCEDURE insertar_temp(
+CREATE OR REPLACE PROCEDURE insert_temp(
     p_nombre IN temporadas.nombre%TYPE,
-    p_mesInicio IN temporadas.mesinicio%TYPE ,
-    p_diaInicio IN temporadas.DIAINICIO%TYPE ,
-    p_mesFin  IN temporadas.MESFIN%TYPE,
-    p_diaFin  IN temporadas.DIAFIN%TYPE
+    p_mInicio IN temporadas.mesinicio%TYPE ,
+    p_dInicio IN temporadas.DIAINICIO%TYPE ,
+    p_mFin  IN temporadas.MESFIN%TYPE,
+    p_dFin  IN temporadas.DIAFIN%TYPE
 )
 IS
 
 BEGIN
 
 INSERT INTO temporadas(nombre, mesinicio, diainicio,mesfin,diafin)
-VALUES (p_nombre, p_mesInicio, p_diaInicio, p_mesFin, p_diaFin);
+VALUES (p_nombre, p_mInicio, p_dInicio, p_mFin, p_dFin);
 
 EXCEPTION 
     WHEN DUP_VAL_ON_INDEX THEN
-        dbms_output.put_line('La descripcion ya existe');
+        dbms_output.put_line('⚠️Error: La descripcion ya existe');
     WHEN OTHERS THEN
-	    dbms_output.put_line('Ocurrió un error en la inserción de los datos');
+	    dbms_output.put_line('⚠️Error: Ocurrió un error en la inserción de los datos');
 
 END;
 /
@@ -125,9 +126,7 @@ CREATE OR REPLACE PROCEDURE creaHabitaciones AS
   piso integer;
   habitacion integer;
 BEGIN
-  -- primero borramos las habitaciones que haya anteriormente
   delete from habitaciones;
-  -- las primeras 11 plantas
  FOR piso in 1..11 LOOP
      FOR habitacion in 1..20 LOOP
         insert into habitaciones values(piso,habitacion,'Doble');
@@ -137,7 +136,6 @@ BEGIN
      END LOOP;
  END LOOP;
  
-  -- ahora la planta 12
   piso:=12;
   FOR habitacion in 1..8 LOOP
         insert into habitaciones values(piso,habitacion,'Suite');
@@ -147,11 +145,11 @@ END creaHabitaciones;
 /
 
 --parte c
-CREATE OR REPLACE FUNCTION CalcularDisponible(fecha1 date, fecha2 date, n1 integer, n2 integer) RETURN integer AS
+CREATE OR REPLACE FUNCTION CalcularDisponible(fechaI date, fechaF date, n1 integer, n2 integer) RETURN integer AS
   reservacion integer;
 BEGIN
-if (fecha1>=fecha2 and fecha1<=fecha2+n2-1) or (fecha1+n1-1>=fecha2 and fecha1+n1-1<=fecha2+n2-1) or
-      (fecha1>=fecha2 and fecha1+n1-1<=fecha2+n2-1) then
+if (fechaI>=fechaF and fechaI<=fechaF+n2-1) or (fechaI+n1-1>=fechaF and fechaI+n1-1<=fechaF+n2-1) or
+      (fechaI>=fechaF and fechaI+n1-1<=fechaF+n2-1) then
    reservacion := 1;
 else
    reservacion :=0;
@@ -166,16 +164,16 @@ CREATE OR REPLACE PROCEDURE reservaHabitacion(
     p_fechaentrada  IN reservas.fechaentrada%TYPE,
      p_noches  IN reservas.noches%TYPE) 
      AS
- numero integer;
+ num integer;
 BEGIN
-     SELECT count(*) INTO numero FROM reservas r
+     SELECT count(*) INTO num FROM reservas r
      where r.piso=p_piso and r.habitacion=p_habitacion and
     CalcularDisponible(r.fechaentrada,p_fechaentrada,r.noches,p_noches)=1;
-     if (numero=0) then
+     if (num=0) then
         insert into reservas (piso, habitacion, fechaentrada, noches )values(p_piso,p_habitacion,p_fechaentrada,p_noches);
        DBMS_OUTPUT.PUT_LINE('Reservado');
      else
-        DBMS_OUTPUT.PUT_LINE('No se puede reservar');
+        DBMS_OUTPUT.PUT_LINE('⚠️Error: No se puede reservar en la fecha asignada');
      end if;
 END reservaHabitacion;
 /
@@ -185,13 +183,13 @@ show error;
 --BLOQUE ANONIMO PARTE B
 DECLARE
 BEGIN
-INSERTAR_TEMP('ALTA',6,1,8,30);
-INSERTAR_TEMP('MEDIA',1,1,31,5);
-INSERTAR_TEMP('BAJA',1,9,31,12);
+insert_temp('BAJA',1,7,31,12);
+insert_temp('MEDIA',1,2,31,5);
+insert_temp('ALTA',6,10,8,30);
+
 END;
 /
 
-select * from temporadas;
 
 --BLOQUE ANONIMO PARTE C
 DECLARE
@@ -200,21 +198,14 @@ creaHabitaciones();
 END;
 /
 
-SELECT * from habitaciones;
 
 --BLOQUE ANONIMO PARTE C
 DECLARE
 
 BEGIN
-reservaHabitacion(1,1,'8-DEC-2021',10);
-reservaHabitacion(1,1,'19-DEC-2021',1);
-reservaHabitacion(1,1,'21-DEC-2021',10);
-reservaHabitacion(1,1,'11-DEC-2021',10);
-reservaHabitacion(1,1,'12-DEC-2021',10);
-reservaHabitacion(1,1,'13-DEC-2021',10);
-reservaHabitacion(1,1,'14-DEC-2021',10);
-reservaHabitacion(1,1,'15-DEC-2021',10);
-reservaHabitacion(1,1,'16-DEC-2021',10);
+reservaHabitacion(1,1,'09-DEC-2021',7);
+reservaHabitacion(1,1,'15-DEC-2021',3);
+reservaHabitacion(1,1,'18-DEC-2021',10);
 
 END;
 /
