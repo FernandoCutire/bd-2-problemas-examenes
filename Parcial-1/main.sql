@@ -1,16 +1,16 @@
 CREATE TABLE TELEFONO_EMPLEADO(
   em_cod_tel  number not null,
-  em_primer_tel varchar(45),
-  em_segundo_tel varchar(45),
-  em_tercer_tel varchar(45),
+  em_primer_tel varchar2(45),
+  em_segundo_tel varchar2(45),
+  em_tercer_tel varchar2(45),
   CONSTRAINT pk_telefono_empleado PRIMARY KEY (em_cod_tel)
 );
 
 CREATE TABLE TELEFONO_SUCURSALES(
   su_cod_tel number not null,
-  su_primer_tel varchar(45),
-  su_segundo_tel varchar(45),
-  su_tercer_tel varchar(45),
+  su_primer_tel varchar2(45),
+  su_segundo_tel varchar2(45),
+  su_tercer_tel varchar2(45),
   CONSTRAINT pk_telefono_sucursales PRIMARY KEY (su_cod_tel)
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE EMPLEADO(
 
 CREATE TABLE SUCURSAL (
   cod_sucursal number not null,
-  domicilio varchar(45),
+  domicilio varchar2(45),
   su_cod_tel number,
   CONSTRAINT pk_sucursal PRIMARY KEY (cod_sucursal),
   CONSTRAINT fk_su_cod_tel FOREIGN KEY (su_cod_tel)
@@ -48,22 +48,22 @@ CREATE TABLE EMPLEADO_SUCURSAL(
 
 CREATE TABLE SECCION_FIJA (
   n_seccion number not null,
-  titlo varchar(45),
-  extension varchar(45),
+  titlo varchar2(45),
+  extension varchar2(45),
   CONSTRAINT pk_seccion_fija PRIMARY KEY(n_seccion)
 );
 
 CREATE TABLE ESPECIALIDAD (
   cod_espe number not null,
-  especialidad varchar(45),
+  especialidad varchar2(45),
   CONSTRAINT pk_especialidad PRIMARY KEY (cod_espe)
 );
 
 CREATE TABLE TELEFONO_PERIODISTA(
   pe_cod_tel number not null,
-  pe_primer_tel varchar(45),
-  pe_segundo_tel varchar(45),
-  pe_tercer_tel varchar(45),
+  pe_primer_tel varchar2(45),
+  pe_segundo_tel varchar2(45),
+  pe_tercer_tel varchar2(45),
   CONSTRAINT pk_telefono_periodista PRIMARY KEY (pe_cod_tel)
 );
 
@@ -77,15 +77,15 @@ CREATE TABLE EJEMPLAR(
 
 CREATE TABLE TIPO(
   cod_tipo number not null,
-  descripcion varchar(45),
+  descripcion varchar2(45),
   CONSTRAINT pk_tipo PRIMARY KEY (cod_tipo)
 );
 
 CREATE TABLE PERIODISTA(
   cip number not null,
-  nombre varchar(45),
-  primer_apellido varchar(45),
-  segundo_apellido varchar(45),
+  nombre varchar2(45),
+  primer_apellido varchar2(45),
+  segundo_apellido varchar2(45),
   pe_cod_tel number,
   pe_cod_espe number,
   CONSTRAINT pk_periodista PRIMARY KEY (cip),
@@ -98,7 +98,7 @@ CREATE TABLE PERIODISTA(
 
 CREATE TABLE REVISTA (
   n_registro number not null,
-  titulo varchar(45),
+  titulo varchar2(45),
   cod_tipo number,
   cod_periodista number,
   CONSTRAINT pk_revista PRIMARY KEY (n_registro),
